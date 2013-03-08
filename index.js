@@ -13,14 +13,26 @@ Reader.prototype.initReader = function(){
     , cacheCursor: 0
     , ended: false
   }
+  this.writable = true
 
   if(!this.write) this.write = this._readerOnWrite
+  if(!this.destroy) this.destory = this._readerOnDestroy
+  if(!this.end) this.end = this._readerOnEnd
 }
 
-Reader.prototype._onReaderWrite = function(data){
+Reader.prototype._readerOnWrite = function(data){
   //data MUST be a buffer, maybe support other data types in the future ...
   this._reader.cache.push(data)
   this.readNext()
+}
+
+//not sure what to put for these ...
+Reader.prototype._readerOnEnd = function(data){
+  this._reader.ended = true
+}
+
+Reader.prototype._readerOnDestroy = function(data){
+  this.end()
 }
 
 //should be overridden, tells the reader there is more data to be read
@@ -33,7 +45,7 @@ Reader.prototype.read = function(count, endOk){
   if(currentBuffer){
     var readEnd = reader.cursor + count
     if(readEnd <= currentBuffer.length){
-      this._reader.cursor += count
+      reader.cursor += count
       var data = currentBuffer.slice(oldCursor, reader.cursor)
       return data
     } else if(this.cache[this.cacheCursor + 1]) {
@@ -54,7 +66,7 @@ Reader.prototype.read = function(count, endOk){
       }
     }
   }
-  if(this.ended && !endOk)
+  if(reader.ended && !endOk)
     this.emit('error', "read could not be performed on ended stream")
 }
 
