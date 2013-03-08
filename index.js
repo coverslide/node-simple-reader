@@ -16,7 +16,7 @@ Reader.prototype.initReader = function(){
   this.writable = true
 
   if(!this.write) this.write = this._readerOnWrite
-  if(!this.destroy) this.destory = this._readerOnDestroy
+  if(!this.destroy) this.destroy = this._readerOnDestroy
   if(!this.end) this.end = this._readerOnEnd
 }
 
@@ -48,9 +48,9 @@ Reader.prototype.read = function(count, endOk){
       reader.cursor += count
       var data = currentBuffer.slice(oldCursor, reader.cursor)
       return data
-    } else if(this.cache[this.cacheCursor + 1]) {
-      var oldCacheCursor = this.cacheCursor
-      var oldBuffer = currentBuffer.slice(this.cursor)
+    } else if(reader.cache[reader.cacheCursor + 1]) {
+      var oldCacheCursor = reader.cacheCursor
+      var oldBuffer = currentBuffer.slice(reader.cursor)
 
       this.cursor = 0
       this.cacheCursor += 1
