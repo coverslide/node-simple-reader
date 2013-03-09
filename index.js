@@ -49,27 +49,29 @@ Reader.prototype.read = function(count, endOk){
       var data = currentBuffer.slice(oldCursor, reader.cursor)
       return data
     } else if(reader.cache[reader.cacheCursor + 1]) {
-      var oldCacheCursor = reader.cacheCursor
-      var oldBuffer = currentBuffer.slice(reader.cursor)
+      var buffers = [currentBuffer.slice(reader.cursor)]
+      var read = currentBuffer.length - reader.cursor
+      var index = reader.cacheCursor
 
-      this.cursor = 0
-      this.cacheCursor += 1
-
-      //let's hope this recurses safely
-      var nextBuffer = this.read(count - oldBuffer.length, endOk)
-      if(nextBuffer){
-        var data = combineBuffers(oldBuffer, nextBuffer)
-        return data
-      } else {
-        this.cursor = oldCursor
-        this.cacheCursor = oldCacheCursor
+      while(true){
+        if(read < count){
+          var nextBuffer = reader.cache[++index]
+          if(!nextBuffer) return
+          if(read + nextBuffer.length < count){
+            buffers.push(nextBuffer)
+            read += nextBuffer.length
+          } else {
+            var remaining = count - read
+            read += remaining
+            buffers.push(nextBuffer.slice(0, remaining))
+            reader.cursor = remaining
+            reader.cacheCursor = index
+            return Buffer.concat(buffers, read)
+          }
+        }
       }
     }
   }
   if(reader.ended && !endOk)
     this.emit('error', "read could not be performed on ended stream")
-}
-
-function combineBuffers(buf1, buf2){
-  return Buffer.concat([buf1, buf2], buf1.length + buf2.length)
 }
